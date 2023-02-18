@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views import CustomLoginView, CustomLogoutView, SchemaListView, SchemaDeleteView, SchemaUpdateView, \
-    SchemaCreateView, SchemaDetailView, CreateDatasets, check_status, \
+    SchemaCreateView, SchemaDetailView, CreateDataset, UpdateDatasetStatus, \
     ColumnCreateView, ColumnDeleteView, ColumnUpdateView
 
 urlpatterns = [
@@ -18,6 +18,6 @@ urlpatterns = [
     path('update_column/<int:pk>/', ColumnUpdateView.as_view(), name='update_column'),
     path('delete_column/<int:pk>/', ColumnDeleteView.as_view(), name='delete_column'),
 
-    path('create_dataset/', CreateDatasets.as_view(), name='create_dataset'),
-    path('check_status/', check_status, name='check_status'),
+    path('create_dataset/', CreateDataset.as_view(), name='create_dataset'),
+    path('update_dataset_status/', UpdateDatasetStatus.as_view(), name='update_dataset_status'),
 ]

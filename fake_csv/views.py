@@ -239,38 +239,35 @@ class ColumnDeleteView(LoginRequiredMixin, DeleteView):
 
 
 @method_decorator(csrf_exempt, name='dispatch')
-class CreateDatasets(LoginRequiredMixin, View):
+class CreateDataset(LoginRequiredMixin, View):
     """Create Data Set"""
 
     def post(self, request):
         pk = int(request.POST.get('schemaId'))
-        rows = int(request.POST.get('input-rows'))
         schema = Schema.objects.get(pk=pk)
         dataset = Dataset.objects.create(schema=schema)
-        if request.user == schema.user:
-            generate_csv_file(rows, schema, dataset)
-            return JsonResponse({'success': True})
-        return JsonResponse({'success': False})
-        # return HttpResponseRedirect(reverse_lazy('detail_schema', kwargs={'pk': pk}))
+        return JsonResponse({'success': True,
+                             'id': dataset.id,
+                             'created': dataset.created_at,
+                             'status': dataset.status})
 
 
-@login_required
-def check_status(request):
+@method_decorator(csrf_exempt, name='dispatch')
+class UpdateDatasetStatus(LoginRequiredMixin, View):
     """Update Data Set status"""
 
-    if request.method == 'GET':
-        parameters_dict = dict(request.GET.lists())
-        data = []
-        if not parameters_dict:
-            return JsonResponse(data, safe=False)
-        all_dataset_id = parameters_dict['all_dataset_id[]']
-        for dataset_id in all_dataset_id:
-            dataset = Dataset.objects.get(id=int(dataset_id))
-            data_dataset_id = {
-                'dataset_id': dataset_id,
-                'dataset_status': dataset.status
-            }
-            if dataset.status == 'Ready':
-                data_dataset_id['csv_file'] = str(dataset.csv_file)
-            data.append(data_dataset_id)
-        return JsonResponse(data, safe=False)
+    def post(self, request):
+        schema_pk = int(request.POST.get('schemaId'))
+        rows = int(request.POST.get('inputRows'))
+        dataset_pk = int(request.POST.get('datasetId'))
+        schema = Schema.objects.get(pk=schema_pk)
+        dataset = Dataset.objects.get(pk=dataset_pk)
+        if request.user == schema.user:
+            generate_csv_file(rows, schema, dataset)
+            return JsonResponse({'success': True,
+                                 'id': dataset.id,
+                                 'created': dataset.created_at,
+                                 'status': dataset.status,
+                                 'csv_file': dataset.csv_file.url})
+        return JsonResponse({'success': False})
+

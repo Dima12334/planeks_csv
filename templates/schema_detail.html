@@ -32,11 +32,9 @@
             <label for="inputRows" class="visually-hidden ml-auto">Rows:</label>
             <input type="number" class="form-control ml-auto mr-3" name="input-rows" style="width: 40%" id="inputRows">
             <button id="generate-data" value="{{ schema.id }}" type="submit" class="btn btn-success mr-4">Generate data</button>
-            {% csrf_token %}
         </form>
     </div>
-    {% if schema.datasets.all %}
-        <table class="table table-bordered mx-auto" style="width: 90%">
+        <table id="dataset-tabel" class="table table-bordered mx-auto" style="width: 90%">
             <thead>
             <tr>
                 <th scope="col">#</th>
@@ -59,9 +57,7 @@
             {% endfor %}
             </tbody>
         </table>
-    {% else %}
-        <p class="text-center py-5">You have no datasets yet</p>
-    {% endif %}
+
 </main>
 {% endblock %}
 
@@ -74,58 +70,75 @@
       url: '{% url "create_dataset" %}',
       data: {
         csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
-        input-rows: $('#inputRows').val(),
+        inputRows: $('#inputRows').val(),
         schemaId: $('#generate-data').val(),
         action: 'post'
       },
       success: function (json) {
         if (json['success']){
-        }
-        else{
+            let table = document.getElementById("dataset-tabel");
+            let tbodyRowNumber = (table.tBodies[0].rows.length) + 1; // count rows in <tbody> + 1
+
+            let id = json['id'];
+            let created = json['created'];
+            let status = json['status'];
+            let newRowContent;
+
+            newRowContent = `
+                    <tr>
+                        <td class="dataset-btn" id="${id}">${tbodyRowNumber}</td>
+                        <td>${created}</td>
+                        <td><p id="status-btn${id}" class="btn btn-secondary">${status}</p></td>
+                        <td id="download-td${id}">
+                        </td>
+                    </tr>
+            `
+            $("#dataset-tabel tbody").append(newRowContent);
+
+            $.ajax({
+              type: 'POST',
+              url: '{% url "update_dataset_status" %}',
+              data: {
+                csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                inputRows: $('#inputRows').val(),
+                schemaId: $('#generate-data').val(),
+                datasetId: id,
+                action: 'post'
+              },
+              success: function (json) {
+                if (json['success']){
+                    let table = document.getElementById("dataset-tabel");
+                    table.deleteRow(table.rows.length - 1);
+
+                    let tbodyRowNumber = (table.tBodies[0].rows.length) + 1; // count rows in <tbody> + 1
+
+                    let id = json['id'];
+                    let created = json['created'];
+                    let status = json['status'];
+                    let csv_file = json['csv_file'];
+
+                    let newRowContent;
+                    newRowContent = `
+                        <tr>
+                            <td class="dataset-btn" id="${id}">${tbodyRowNumber}</td>
+                            <td>${created}</td>
+                            <td><p id="status-btn${id}" class="btn btn-success">${status}</p></td>
+                            <td id="download-td${id}">
+                                <a href="${csv_file}" id="download-btn${id}" class="p mr-4">Download</a>
+                            </td>
+                        </tr>
+                    `
+                    $("#dataset-tabel tbody").append(newRowContent);
+                }
+              },
+              error: function (xhr, errmsg, err) {
+              }
+            });
         }
       },
       error: function (xhr, errmsg, err) {
       }
     });
   })
-</script>
-<script type="text/javascript">
-
-    (function poll() {
-        let continuePolling = true;
-        setTimeout(function () {
-            const all_dataset_id = $('.dataset-btn').map(function() {
-                if ($.trim($(`#status-btn${this.id}`).text()) === 'Processing') {
-                    return this.id;
-                }
-            }).get()
-            console.log(all_dataset_id)
-            if (all_dataset_id.length === 0) {
-                continuePolling = false;
-            }
-            $.ajax({
-                url: '/check_status/',
-                type: "GET",
-                data: {
-                    'all_dataset_id': all_dataset_id
-                },
-                success: function (data) {
-                    var index;
-                    for (index = 0; index < data.length; ++index) {
-                        const dataset = data[index]
-                        if (dataset.dataset_status === 'Ready') {
-                            const id_dataset = parseInt(dataset.dataset_id)
-                            const csv_link = dataset.csv_file
-                            $(`#status-btn${id_dataset}`).text('Ready').toggleClass('btn btn-secondary btn btn-success')
-                            $(`#download-td${id_dataset}`).prepend(`<a href="${csv_link}" id="download-btn${csv_link}" class="p mr-4">Download</a>`)
-                        }
-                    }
-                },
-                dataType: "json",
-                complete: function() { if (continuePolling) { poll(); }}
-            })
-        }, 1500);
-    })();
-
 </script>
 {% endblock scripts %}
