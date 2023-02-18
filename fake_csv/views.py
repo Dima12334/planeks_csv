@@ -12,7 +12,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import DeleteView, UpdateView, CreateView, ListView, DetailView
 
-from .forms import ColumnForm, SchemaForm  # ColumnFormSet
+from .forms import ColumnForm, SchemaForm, ColumnFormSet
 from .models import Dataset, Schema, Column
 from .service import generate_csv_file
 
@@ -54,18 +54,30 @@ class SchemaCreateView(LoginRequiredMixin, CreateView):
     model = Schema
     form_class = SchemaForm
     template_name = 'schema_create.html'
+    success_url = reverse_lazy('schema_list')
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['is_add'] = True
-        return kwargs
+    def get_context_data(self, **kwargs):
+        if self.request.POST:
+            kwargs['formset'] = ColumnFormSet(self.request.POST)
+        else:
+            kwargs['formset'] = ColumnFormSet()
+        return super().get_context_data(**kwargs)
 
     def form_valid(self, form):
-        form.instance.user = self.request.user
-        return super(SchemaCreateView, self).form_valid(form)
+        context = self.get_context_data()
+        formset = context['formset']
+        if formset.is_valid():
+            self.object = form.save(commit=False)
+            self.object.user = self.request.user
+            self.object.save()
 
-    def get_success_url(self):
-        return reverse_lazy('add_columns', kwargs={'id_schema': self.object.id})
+            for column_form in formset:
+                column = column_form.save(commit=False)
+                column.schema = self.object
+                column.save()
+            return super().form_valid(form)
+        else:
+            return self.form_invalid(form)
 
 
 class SchemaUpdateView(LoginRequiredMixin, UpdateView):
@@ -209,11 +221,6 @@ class ColumnCreateView(LoginRequiredMixin, CreateView):
         context = super(ColumnCreateView, self).get_context_data(**kwargs)
         context['columns'] = columns
         return context
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['is_add'] = True
-        return kwargs
 
 
 class ColumnUpdateView(LoginRequiredMixin, UpdateView):

@@ -14,12 +14,12 @@ class Schema(models.Model):
         DOUBLE_QUOTE = '"', 'Double-quote(")'
         SINGLE_QUOTE = "'", "Single-quote(')"
 
-    name = models.CharField(max_length=255, verbose_name='Schema name')
-    column_separator = models.CharField(max_length=50, verbose_name='Delimiter', choices=ColumnSeparator.choices,
+    name = models.CharField(max_length=255, verbose_name='Name')
+    column_separator = models.CharField(max_length=50, verbose_name='Column separator', choices=ColumnSeparator.choices,
                                         default=ColumnSeparator.COMMA)
-    string_character = models.CharField(max_length=50, verbose_name='Text qualifier', choices=StringCharacter.choices,
+    string_character = models.CharField(max_length=50, verbose_name='String character', choices=StringCharacter.choices,
                                         default=StringCharacter.DOUBLE_QUOTE)
-    modified_at = models.DateField(auto_now=True, verbose_name='Date of modify')
+    modified_at = models.DateField(auto_now=True, verbose_name='Modified')
     user = models.ForeignKey(User, verbose_name='Schema author', on_delete=models.CASCADE, related_name='users')
 
     class Meta:
@@ -46,11 +46,11 @@ class Column(models.Model):
 
     schema = models.ForeignKey(Schema, verbose_name='Schema', on_delete=models.CASCADE, related_name='columns')
     name = models.CharField(max_length=255, verbose_name='Column name')
-    type = models.CharField(max_length=50, verbose_name='Column type', choices=ColumnType.choices,
-                            default=ColumnType.INTEGER)
-    from_value = models.IntegerField(verbose_name='Integer from', null=True, blank=True)
-    to_value = models.IntegerField(verbose_name='Integer to', null=True, blank=True)
-    order = models.PositiveIntegerField(verbose_name='Column order')
+    type = models.CharField(max_length=50, verbose_name='Type', choices=ColumnType.choices,
+                            default=ColumnType.FULL_NAME)
+    from_value = models.IntegerField(verbose_name='From', null=True, blank=True)
+    to_value = models.IntegerField(verbose_name='To', null=True, blank=True)
+    order = models.PositiveIntegerField(verbose_name='Order')
 
     class Meta:
         verbose_name = 'Column'
@@ -68,9 +68,9 @@ class Dataset(models.Model):
         READY = 'Ready', 'Ready'
 
     schema = models.ForeignKey(Schema, verbose_name='Schema', on_delete=models.CASCADE, related_name='datasets')
-    created_at = models.DateField(auto_now_add=True, verbose_name='Date of create')
+    created_at = models.DateField(auto_now_add=True, verbose_name='Created')
     csv_file = models.FileField(verbose_name='CSV file', blank=True, null=True)
-    status = models.CharField(max_length=50, verbose_name='Dataset status', choices=Status.choices,
+    status = models.CharField(max_length=50, verbose_name='Status', choices=Status.choices,
                               default=Status.PROCESSING)
 
     class Meta:
