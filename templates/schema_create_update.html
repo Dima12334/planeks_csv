@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block container %}
+{% load crispy_forms_tags %}
+<main class="container py-5 ">
+    <form class="text-left form-contact" method="POST">
+        <div class="d-flex justify-content-between">
+            {% if is_update %}
+                <h4 class="text-left">Update schema</h4>
+            {% else %}
+                <h4 class="text-left">New schema</h4>
+            {% endif %}
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+        <div class="py-3 justify-content-left">
+            {% csrf_token %}
+            <div>
+                {% crispy form 'bootstrap4' %}
+            </div>
+
+            <h4 class="text-left">Schema Columns</h4>
+                 {{ formset.management_form }}
+                     <div id="form_set" class="">
+                         {% for formset_form in formset %}
+                              <div id="{{ formset_form.prefix }}" class='column-form d-flex justify-content-between row py-3 justify-content-left'>
+                                  {# {% crispy formset_form 'bootstrap4' %} #}
+
+                                  {{ formset_form|crispy }}
+                                    <button id="del-form" class="btn btn-link" onclick="deleteForm('{{ formset_form.prefix }}')" style="color: #D9534F" type="button">Delete</button>
+                              </div>
+                         {% endfor %}
+                     </div>
+        </div>
+        <div id="empty-form" class="hidden">
+            {# {% crispy formset.empty_form 'bootstrap4' %} #}
+
+            {{ formset.empty_form|crispy }}
+            <button id="del-form" class="btn btn-link" onclick="deleteForm('{{ formset.empty_form.prefix }}')" style="color: #D9534F" type="button">Delete</button>
+        </div>
+    </form>
+    <button id="add-form" class="btn btn-primary" type="button">Add column</button>
+</main>
+
+{% block scripts %}
+<script>
+    const addFormBtn = document.getElementById('add-form')
+    const totalNewForms = document.getElementById('id_form-TOTAL_FORMS')
+
+    addFormBtn.addEventListener('click', addForm)
+    function addForm(event) {
+        if (event) {
+            event.preventDefault()
+        }
+        const currentColumnForms = document.getElementsByClassName('column-form')
+        const currentFormCount = currentColumnForms.length // + 1
+        const formCopyTarget = document.getElementById('form_set')
+        const copyEmptyFormEl = document.getElementById('empty-form').cloneNode(true)
+        copyEmptyFormEl.setAttribute('class', 'column-form d-flex justify-content-between row py-3 justify-content-left')
+        copyEmptyFormEl.setAttribute('id', `form-${currentFormCount}`)
+        const regex = new RegExp('__prefix__', 'g')
+        copyEmptyFormEl.innerHTML = copyEmptyFormEl.innerHTML.replace(regex, currentFormCount)
+        totalNewForms.setAttribute('value', currentFormCount + 1)
+        // now add new empty form element to our html form
+        formCopyTarget.append(copyEmptyFormEl)
+    }
+
+    function deleteForm(prefix) {
+        // Find the formset row with the corresponding prefix and delete it
+        const formsetRow = document.querySelector(`#${prefix}`);
+
+        if('{{ is_update }}') {
+            // If the formset row has an input with a value, it means it corresponds to an existing model instance
+            if (formsetRow.querySelector('input[type="hidden"][value]')) {
+              // Get the model instance ID from the input value
+              const id = formsetRow.querySelector('input[type="hidden"]').value;
+
+              // Ask the user to confirm the delete operation
+              if (confirm("Are you sure you want to delete this column? This column will be removed even if you don't click the Submit button for the form!")) {
+                  // Send a DELETE request to the server to delete the model instance
+                  fetch(`/delete_column/${id}/`, {
+                      method: 'DELETE',
+                  }).then(response => {
+                      if (response.ok) {
+                         // const form = document.querySelector(`#form-${prefix}`);
+                         ///const deleteInput = form.querySelector(`input[name="${prefix}-DELETE"]`);
+                         // deleteInput.value = true;
+                      } else {
+                          // Handle any errors that occurred during the delete operation
+                          console.error('Delete operation failed:', response.status);
+                      }
+                  });
+              }
+            }
+        }
+
+        // Delete the formset row from the DOM
+        formsetRow.remove();
+
+        // Update the TOTAL_FORMS input to reflect the new number of forms in the formset
+        const formCount = document.querySelectorAll('.column-form').length;
+        const totalFormsInput = document.querySelector('input[name="form-TOTAL_FORMS"]');
+        totalFormsInput.value = formCount;
+
+        // Re-number the remaining formset rows
+        const formsetRows = document.querySelectorAll('.column-form');
+        formsetRows.forEach((row, index) => {
+          const oldPrefix = row.getAttribute('id');
+          const newPrefix = `form-${index}`;
+          row.setAttribute('id', newPrefix);
+          const inputs = row.querySelectorAll('input, select, textarea');
+          inputs.forEach(input => {
+            input.setAttribute('name', input.getAttribute('name').replace(oldPrefix, newPrefix));
+            input.setAttribute('id', input.getAttribute('id').replace(oldPrefix, newPrefix));
+          });
+        });
+    }
+
+</script>
+{% endblock scripts %}
+
+<style>
+    .column-form {
+
+    }
+
+    .column-form select {
+    word-wrap: normal;
+
+    display: inline-block;
+    width: 100%;
+    height: calc(1.5em + .75rem + 2px);
+    padding: .375rem 1.75rem .375rem .75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #495057;
+    vertical-align: middle;
+    background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 4 5'%3e%3cpath fill='%23343a40' d='M2 0L0 2h4zm0 5L0 3h4z'/%3e%3c/svg%3e") no-repeat right .75rem center/8px 10px;
+    background-color: rgba(0, 0, 0, 0);
+    background-color: #fff;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    }
+
+     .column-form input {
+    display: block;
+    width: 100%;
+    height: calc(1.5em + .75rem + 2px);
+    padding: .375rem .75rem;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    color: #495057;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+     }
+
+
+
+    .hidden {
+        display: none
+    }
+</style>
+{% endblock %}

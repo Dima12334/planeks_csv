@@ -1,7 +1,7 @@
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Row, Field
 from django import forms
-from django.forms import formset_factory
+from django.forms import modelformset_factory
 
 from .models import Schema, Column
 
@@ -33,20 +33,8 @@ class ColumnForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # self.helper = FormHelper()
-        # self.helper.label_class = 'd-flex justify-content-left mx-1'
-        # self.helper.field_class = 'mx-1'
         self.fields['from_value'].disabled = False
         self.fields['to_value'].disabled = False
-        # self.helper.layout = Layout(
-        #     Row(
-        #         Field('name'),
-        #         Field('type'),
-        #         Field('from_value'),
-        #         Field('to_value'),
-        #         Field('order'),
-        #     )
-        # )
 
 
-ColumnFormSet = formset_factory(ColumnForm, extra=1)
+ColumnFormSet = modelformset_factory(Column, form=ColumnForm, extra=0)
