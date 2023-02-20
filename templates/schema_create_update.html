@@ -89,6 +89,10 @@
                           console.error('Delete operation failed:', response.status);
                       }
                   });
+              } else {
+                // User rejected the confirmation, stop the function
+                console.log('Delete operation cancelled');
+                return;
               }
             }
         }
