@@ -32,7 +32,7 @@ class Schema(models.Model):
         User,
         verbose_name="Schema author",
         on_delete=models.CASCADE,
-        related_name="users",
+        related_name="schemas",
     )
 
     class Meta:
