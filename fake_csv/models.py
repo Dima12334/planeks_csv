@@ -3,16 +3,18 @@ from django.db import models
 from django.urls import reverse
 
 
+class ColumnSeparator(models.TextChoices):
+    COMMA = ",", "Comma(,)"
+    SEMICOLON = ";", "Semicolon(;)"
+
+
+class StringCharacter(models.TextChoices):
+    DOUBLE_QUOTE = '"', 'Double-quote(")'
+    SINGLE_QUOTE = "'", "Single-quote(')"
+
+
 class Schema(models.Model):
     """Schema model"""
-
-    class ColumnSeparator(models.TextChoices):
-        COMMA = ",", "Comma(,)"
-        SEMICOLON = ";", "Semicolon(;)"
-
-    class StringCharacter(models.TextChoices):
-        DOUBLE_QUOTE = '"', 'Double-quote(")'
-        SINGLE_QUOTE = "'", "Single-quote(')"
 
     name = models.CharField(max_length=255, verbose_name="Name")
     column_separator = models.CharField(
@@ -42,20 +44,21 @@ class Schema(models.Model):
     def __str__(self):
         return f"Schema {self.name}"
 
-    def get_url(self):
+    def get_absolute_url(self):
         return reverse("detail_schema", args=(self.id,))
+
+
+class ColumnType(models.TextChoices):
+    FULL_NAME = "Full name", "Full name"
+    JOB = "Job", "Job"
+    EMAIL = "Email", "Email"
+    PHONE_NUMBER = "Phone number", "Phone number"
+    INTEGER = "Integer", "Integer"
+    DATE = "Date", "Date"
 
 
 class Column(models.Model):
     """Schema Columns model"""
-
-    class ColumnType(models.TextChoices):
-        FULL_NAME = "Full name", "Full name"
-        JOB = "Job", "Job"
-        EMAIL = "Email", "Email"
-        PHONE_NUMBER = "Phone number", "Phone number"
-        INTEGER = "Integer", "Integer"
-        DATE = "Date", "Date"
 
     schema = models.ForeignKey(
         Schema, verbose_name="Schema", on_delete=models.CASCADE, related_name="columns"
@@ -79,12 +82,13 @@ class Column(models.Model):
         return f"-{self.name}- column in -{self.schema}- schema"
 
 
+class Status(models.TextChoices):
+    PROCESSING = "Processing", "Processing"
+    READY = "Ready", "Ready"
+
+
 class Dataset(models.Model):
     """Model for storage Data sets"""
-
-    class Status(models.TextChoices):
-        PROCESSING = "Processing", "Processing"
-        READY = "Ready", "Ready"
 
     schema = models.ForeignKey(
         Schema, verbose_name="Schema", on_delete=models.CASCADE, related_name="datasets"

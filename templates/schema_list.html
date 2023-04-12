@@ -20,7 +20,7 @@
         {% for schema in schemas %}
         <tr>
             <th scope="row">{{ forloop.counter }}</th>
-            <td><a href="{{ schema.get_url }}">{{ schema.name }}</a></td>
+            <td><a href="{{ schema.get_absolute_url }}">{{ schema.name }}</a></td>
             <td>{{ schema.modified_at|date:"Y-m-d" }}</td>
             <td>
                 <div class="form-inline">

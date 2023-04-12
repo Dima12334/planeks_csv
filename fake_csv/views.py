@@ -3,9 +3,7 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.forms import AuthenticationForm
 from django.http import JsonResponse
 from django.urls import reverse_lazy
-from django.utils.decorators import method_decorator
 from django.views import View
-from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import (
     DeleteView,
     UpdateView,
@@ -68,8 +66,8 @@ class SchemaCreateView(LoginRequiredMixin, CreateView):
         if self.request.POST:
             kwargs["formset"] = ColumnFormSet(self.request.POST)
         else:
-            for i, form in enumerate(formset):
-                form.prefix = f"form-{i}"
+            for index, form in enumerate(formset):
+                form.prefix = f"form-{index}"
             kwargs["formset"] = formset
         return super().get_context_data(**kwargs)
 
@@ -140,7 +138,6 @@ class SchemaDeleteView(LoginRequiredMixin, DeleteView):
     success_url = reverse_lazy("schema_list")
 
 
-@method_decorator(csrf_exempt, name="dispatch")
 class DeleteColumnView(LoginRequiredMixin, View):
     """Delete Column on UPDATE page"""
 
@@ -156,7 +153,6 @@ class DeleteColumnView(LoginRequiredMixin, View):
             return JsonResponse({"success": False, "error": "Invalid request method"})
 
 
-@method_decorator(csrf_exempt, name="dispatch")
 class CreateDataset(LoginRequiredMixin, View):
     """Create Data Set"""
 
@@ -174,7 +170,6 @@ class CreateDataset(LoginRequiredMixin, View):
         )
 
 
-@method_decorator(csrf_exempt, name="dispatch")
 class UpdateDatasetStatus(LoginRequiredMixin, View):
     """Update Data Set status"""
 
